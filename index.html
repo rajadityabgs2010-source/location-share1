@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>Location Share</title>
 
   <style>
@@ -22,6 +23,14 @@
       border-radius: 20px;
     }
 
+    h1 {
+      margin-bottom: 10px;
+    }
+
+    p {
+      line-height: 1.6;
+    }
+
     button {
       padding: 14px 22px;
       border: 0;
@@ -29,6 +38,11 @@
       cursor: pointer;
       font-weight: bold;
       font-size: 16px;
+      margin-top: 15px;
+    }
+
+    button:hover {
+      opacity: 0.9;
     }
 
     #result {
@@ -44,118 +58,186 @@
 
 <body>
 
-<div class="box">
+  <div class="box">
 
-  <h1>📍 Share Location</h1>
+    <h1>📍 Share Location</h1>
 
-  <p>
-    Your current device location will be shared after you allow location access.
-  </p>
+    <p>
+      Your current device location will be shared after you
+      choose to allow location access.
+    </p>
 
-  <button onclick="getLocation()">
-    Allow & Share Location
-  </button>
+    <button onclick="getLocation()">
+      Allow & Share Location
+    </button>
 
-  <div id="result"></div>
+    <div id="result"></div>
 
-</div>
+  </div>
 
-<!-- Supabase library -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<script>
-const SUPABASE_URL = "https://tsresjspiyvryjxaohzf.supabase.co";
-const SUPABASE_KEY = "sb_publishable_VNAhK7j_Z84FUP2VNAL7XQ_TtRghvgE";
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-const supabaseClient = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_KEY
-);
+  <script>
 
-async function getLocation() {
+    // Supabase connection
+    const SUPABASE_URL =
+      "https://tsresjspiyvryjxaohzf.supabase.co";
 
-  const result = document.getElementById("result");
+    const SUPABASE_KEY =
+      "sb_publishable_VNAhK7j_Z84FUP2VNAL7XQ_TtRghvgE";
 
-  if (!navigator.geolocation) {
-    result.innerHTML = "❌ Geolocation is not supported.";
-    return;
-  }
 
-  result.innerHTML = "📡 Requesting your location...";
+    const supabaseClient =
+      window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+      );
 
-  navigator.geolocation.getCurrentPosition(
 
-    async function(position) {
+    // Share location
+    async function getLocation() {
 
-      const latitude = position.coords.latitude;
-      const longitude = position.coords.longitude;
-      const accuracy = Math.round(position.coords.accuracy);
+      const result =
+        document.getElementById("result");
 
-      const { error } = await supabaseClient
-        .from("locations")
-        .insert([
-          {
-            latitude: latitude,
-            longitude: longitude,
-            accuracy: accuracy
-          }
-        ]);
 
-      if (error) {
-        console.error("Supabase error:", error);
+      if (!navigator.geolocation) {
+
         result.innerHTML =
-          "❌ Location could not be shared.";
+          "❌ Geolocation is not supported by this browser.";
+
         return;
       }
 
-      const map =
-        "https://www.google.com/maps?q=" +
-        latitude + "," + longitude;
 
-      result.innerHTML = `
-        <h3>✅ Location shared successfully</h3>
+      result.innerHTML =
+        "📡 Requesting your location...";
 
-        <p>Your location has been shared.</p>
 
-        <p>
-          <b>Latitude:</b> ${latitude}<br>
-          <b>Longitude:</b> ${longitude}<br>
-          <b>Accuracy:</b> approximately ${accuracy} meters
-        </p>
+      navigator.geolocation.getCurrentPosition(
 
-        <p>
-          <a href="${map}" target="_blank">
-            📍 Open Location in Google Maps
-          </a>
-        </p>
-      `;
-    },
+        async function(position) {
 
-    function(error) {
+          const latitude =
+            position.coords.latitude;
 
-      if (error.code === 1) {
-        result.innerHTML =
-          "❌ Location permission was denied.";
-      } else if (error.code === 2) {
-        result.innerHTML =
-          "❌ Location is unavailable.";
-      } else if (error.code === 3) {
-        result.innerHTML =
-          "❌ Location request timed out.";
-      } else {
-        result.innerHTML =
-          "❌ Unable to get your location.";
-      }
-    },
+          const longitude =
+            position.coords.longitude;
 
-    {
-      enableHighAccuracy: true,
-      timeout: 15000,
-      maximumAge: 0
+          const accuracy =
+            Math.round(position.coords.accuracy);
+
+
+          // Save location to Supabase
+          const { error } =
+            await supabaseClient
+              .from("locations")
+              .insert([
+                {
+                  latitude: latitude,
+                  longitude: longitude,
+                  accuracy: accuracy
+                }
+              ]);
+
+
+          if (error) {
+
+            console.error(
+              "Supabase error:",
+              error
+            );
+
+            result.innerHTML =
+              "❌ Location could not be shared.";
+
+            return;
+          }
+
+
+          const map =
+            "https://www.google.com/maps?q=" +
+            latitude +
+            "," +
+            longitude;
+
+
+          result.innerHTML = `
+
+            <h3>✅ Location shared successfully</h3>
+
+            <p>
+              Your location has been shared.
+            </p>
+
+            <p>
+              <b>Latitude:</b> ${latitude}<br>
+              <b>Longitude:</b> ${longitude}<br>
+              <b>Accuracy:</b>
+              approximately ${accuracy} meters
+            </p>
+
+            <p>
+              <a
+                href="${map}"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                📍 Open Location in Google Maps
+              </a>
+            </p>
+
+          `;
+
+        },
+
+
+        function(error) {
+
+          if (error.code === 1) {
+
+            result.innerHTML =
+              "❌ Location permission was denied.";
+
+          }
+
+          else if (error.code === 2) {
+
+            result.innerHTML =
+              "❌ Location is unavailable.";
+
+          }
+
+          else if (error.code === 3) {
+
+            result.innerHTML =
+              "❌ Location request timed out.";
+
+          }
+
+          else {
+
+            result.innerHTML =
+              "❌ Unable to get your location.";
+
+          }
+
+        },
+
+
+        {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 0
+        }
+
+      );
+
     }
-  );
-}
-</script>
+
+  </script>
 
 </body>
 </html>
